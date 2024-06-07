@@ -1,0 +1,923 @@
+ab.l
+%{
+#include "y.tab.h"
+%}
+
+%%
+[aA] { return A; }
+[bB] { return B; }
+\n { return NL; }
+. {return yytext[0]; }
+
+%%
+int yywrap(){
+return 1;
+}
+------------------------------
+ab.y
+%{
+#include<stdio.h>
+#include<stdlib.h>
+%}
+%token A B NL
+%%
+stmt: S NL {printf("valid string\n");
+        exit(0);}
+;
+S: A S B
+|
+;
+%%
+int yyerror(char *msg)
+{
+  printf("invalid strings\n");
+exit(0);
+}
+main()
+{
+ printf("enter the string:\n");
+ yyparse();
+}
+------------------------------------------------------------
+comment_count.l
+%{
+ #include<stdio.h>
+ int scomments=0;
+ int mcomments=0;
+ FILE *f1;
+%}
+%%
+"//"[a-zA-Z0-9\t ]*      {scomments++;}
+"/*"[a-zA-Z0-9\t\n ]*"*/"  {mcomments++;}
+
+.               ;
+%%
+int yywrap(){
+return 1;}
+int main(){
+        f1=fopen("input.c","r");
+        yyin=f1;
+        yylex();
+        printf("the number of single line comments is %d\n",scomments);
+        printf("the number of double line comments is %d\n",mcomments);
+
+        return 0;
+}
+------------------------------
+comment_eliminate.l
+%{
+ #include<stdio.h>
+ int scomments=0;
+ int mcomments=0;
+ FILE *f1,*f2;
+%}
+%%
+"//"[a-zA-Z0-9\t ]*      {scomments++;}
+"/*"[a-zA-Z0-9\t\n ]*"*/"  {mcomments++;}
+.               {fprintf(f2,"%s",yytext);}
+[\n]            {fprintf(f2,"%s",yytext);}
+
+%%
+int yywrap(){
+return 1;}
+int main(){
+        f1=fopen("input.c","r");
+        f2=fopen("output.c","w");
+        yyin=f1;
+        yylex();
+        printf("the number of single line comments is %d\n",scomments);
+        printf("the number of double line comments is %d\n",mcomments);
+
+        return 0;
+}
+------------------------------
+consonants.txt
+sdmctcs
+------------------------------
+count.l
+/*Program to count the number of consonants and vowels*/
+%{
+        #include<stdio.h>
+        int vowels=0;
+        int consonants=0;
+        int blanks=0;
+%}
+%%
+
+[aeiouAEIOU] {vowels++;}
+[a-zA-Z]     {consonants++;}
+[ ]          {blanks++;}
+
+%%
+int yywrap(){
+return 1;
+}
+main(){
+ printf("Enter the input string:\n");
+ yylex();
+ printf("The number of vowels=%d\n",vowels);
+ printf("The number of consonants=%d\n",consonants);
+ printf("The number of blanks=%d\n",blanks);
+}
+------------------------------
+cparser.l
+%{
+#include "y.tab.h"
+%}
+%%
+"#define"       {return DEF;}
+"#include"      {return INC;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[0-9]+          {return NUM;}
+[ ]             {return BLANK;}
+[\n]            {return NL;}
+.               {return yytext[0];}
+%%
+------------------------------
+cparser.y
+%{
+#include<stdio.h>
+#include<stdlib.h>
+%}
+%token DEF INC ID NUM  BLANK NL
+%%
+        pgm:     def inc
+                 inc def
+                {printf("Valid C program\n");exit(0);}
+
+        ;
+        def:    DEF BLANK ID BLANK NUM NL def
+        |
+        ;
+        inc:    INC'<'ID'.'ID'>'NL inc
+        |
+        ;
+%%
+int yyerror(char *msg)
+{
+        printf("Invalid\n");
+        exit(0);
+}
+main()
+{
+        printf("Enter the program\n");
+        yyparse();
+}
+------------------------------
+cparser2.l
+%{
+#include "y.tab.h"
+%}
+%%
+"#define"       {return DEF;}
+"#include"      {return INC;}
+"main()"      {return MAIN;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[0-9]+          {return NUM;}
+[ ]             {return BLANK;}
+[\n]            {return NL;}
+.               {return yytext[0];}
+%%
+------------------------------
+cparser2.y
+%{
+#include<stdio.h>
+#include<stdlib.h>
+%}
+%token DEF INC ID NUM  BLANK MAIN  NL
+%%
+        pgm:    def inc main'{' NL '}'  {printf("Valid C program\n");exit(0);}
+
+        ;
+        def:    DEF BLANK ID BLANK NUM NL def
+        |
+        ;
+        inc:    INC'<'ID'.'ID'>'NL inc
+        |
+        ;
+        main:  MAIN NL
+%%
+int yyerror(char *msg)
+{
+        printf("Invalid\n");
+        exit(0);
+}
+main()
+{
+        printf("Enter the program\n");
+        yyparse();
+}
+------------------------------
+cparser3.y
+%{
+#include "y.tab.h"
+%}
+%%
+"#define"       {return DEF;}
+"#include"      {return INC;}
+"main()"      {return MAIN;}
+"int"         {return INT;}
+"float"       {return FLOAT;}
+"char"        {return CHAR;}
+"double"      {return DOUBLE;}
+[0-9]+[.][0-9] {return FNUM;}
+'[a-zA-Z][a-zA-Z]*'      {return CNUM;}
+[0-9]+[.][0-9][0-9]*        {return DNUM;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[0-9]+          {return NUM;}
+[ ]             {return BLANK;}
+[\n]            {return NL;}
+.               {return yytext[0];}
+%%
+------------------------------
+cparser3.l
+%{
+#include<stdio.h>
+#include<stdlib.h>
+%}
+%token DEF INC ID NUM FNUM CNUM DNUM CHAR DOUBLE BLANK MAIN  NL INT FLOAT
+%%
+        pgm:    def inc main'{' NL eintdec efloatdec echardec edoubledec '}'    {printf("Valid C program\n");exit(0);}
+
+        ;
+        def:    DEF BLANK ID BLANK NUM NL def
+        |
+        ;
+        inc:    INC'<'ID'.'ID'>'NL inc
+        |
+        ;
+        dec: dtype BLANK var';'NL dec
+        |
+        ;
+        dtype: INT
+        |      FLOAT
+        |      CHAR
+        |      DOUBLE
+        ;
+        eintdec:INT BLANK ID'=' NUM ';' NL eintdec
+        |
+        ;
+        efloatdec:FLOAT BLANK ID'=' FNUM ';' NL efloatdec
+        |
+        ;
+        echardec:CHAR BLANK ID'=' CNUM ';' NL echardec
+        |
+        ;
+        edoubledec:DOUBLE BLANK ID'=' DNUM ';' NL edoubledec
+        |
+        ;
+        main: MAIN NL
+        ;
+        var: ID',' var
+        |    ID
+        ;
+
+%%
+int yyerror(char *msg)
+{
+        printf("Invalid\n");
+        exit(0);
+}
+main()
+{
+        printf("Enter the program\n");
+        yyparse();
+}
+------------------------------
+cparser3.y
+%{
+#include "y.tab.h"
+%}
+%%
+"#define"       {return DEF;}
+"#include"      {return INC;}
+"main()"      {return MAIN;}
+"int"         {return INT;}
+"float"       {return FLOAT;}
+"char"        {return CHAR;}
+"double"      {return DOUBLE;}
+[0-9]+[.][0-9] {return FNUM;}
+'[a-zA-Z][a-zA-Z]*'      {return CNUM;}
+[0-9]+[.][0-9][0-9]*        {return DNUM;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[0-9]+          {return NUM;}
+[ ]             {return BLANK;}
+[\n]            {return NL;}
+.               {return yytext[0];}
+%%
+------------------------------
+cparser4.l
+%{
+#include "y.tab.h"
+%}
+%%
+"#define"       {return DEF;}
+"#include"      {return INC;}
+"main()"      {return MAIN;}
+"int"         {return INT;}
+"float"       {return FLOAT;}
+"char"        {return CHAR;}
+"double"      {return DOUBLE;}
+[0-9]+[.][0-9] {return FNUM;}
+'[a-zA-Z][a-zA-Z]*'      {return CNUM;}
+[0-9]+[.][0-9][0-9]*        {return DNUM;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[0-9]+          {return NUM;}
+[ ]             {return BLANK;}
+[\n]            {return NL;}
+.               {return yytext[0];}
+%%
+------------------------------
+cparser4.y
+%{
+#include<stdio.h>
+#include<stdlib.h>
+%}
+%token DEF INC ID NUM CHAR DOUBLE BLANK MAIN  NL INT FLOAT
+%%
+        pgm:    def inc main'{' NL dec '}'      {printf("Valid C program\n");exit(0);}
+
+        ;
+        def:    DEF BLANK ID BLANK NUM NL def
+        |
+        ;
+        inc:    INC'<'ID'.'ID'>'NL inc
+        |
+        ;
+        dec: dtype BLANK var';'NL dec
+        |
+        ;
+        dtype: INT
+        |      FLOAT
+        |      CHAR
+        |      DOUBLE
+        ;
+        main: MAIN NL
+        ;
+        var: ID'='NUM',' var
+        |    ID ','ID
+        |    ID '='NUM
+        |    ID '[' NUM ']'
+        |    ID
+        ;
+%%
+int yyerror(char *msg)
+{
+        printf("Invalid\n");
+        exit(0);
+}
+main()
+{
+        printf("Enter the program\n");
+        yyparse();
+}
+------------------------------
+cparser5.l
+%{
+#include "y.tab.h"
+%}
+%%
+"#define"       {return DEF;}
+"#include"      {return INC;}
+"main()"      {return MAIN;}
+"int"         {return INT;}
+"float"       {return FLOAT;}
+"char"        {return CHAR;}
+"double"      {return DOUBLE;}
+"if"          {return IF;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[0-9]+          {return NUM;}
+[ ]             {return BLANK;}
+[\n]            {return NL;}
+.               {return yytext[0];}
+%%
+------------------------------
+cparser5.y
+%{
+#include<stdio.h>
+#include<stdlib.h>
+%}
+%token DEF INC ID NUM CHAR DOUBLE BLANK MAIN  NL INT FLOAT IF
+%%
+        pgm:    def inc main'{' NL dec iff NL '}'       {printf("Valid C program\n");exit(0);}
+
+        ;
+        def:    DEF BLANK ID BLANK NUM NL def
+        |
+        ;
+        inc:    INC'<'ID'.'ID'>'NL inc
+        |
+        ;
+        dec: dtype BLANK var';'NL dec
+        |
+        ;
+        dtype: INT
+        |      FLOAT
+        |      CHAR
+        |      DOUBLE
+        ;
+        main: MAIN NL
+        ;
+        var: ID'='NUM',' var
+        |    ID ','ID
+        |    ID '='NUM
+        |    ID '[' NUM ']'
+        |    ID
+        ;
+        iff: IF'('cond')' '{' NL var';' NL '}'
+        |
+        ;
+        cond: ID '>' ID
+        |     ID '<' ID
+        |     ID '>''=' ID
+        |     ID '<''='
+        |     NUM '>' NUM
+        |     NUM '<' NUM
+        |     NUM '>''='NUM
+        |     NUM '<''='NUM
+        |     NUM '!''='NUM
+        |     NUM '=''='NUM
+        |     ID  '=''='ID
+        |     ID  '!''='ID
+        |     ID  '>'NUM
+        |     ID  '<'NUM
+        |     ID   '>''='NUM
+        |     ID   '<''='NUM
+        |     ID    '!''='NUM
+        |     ID    '=''='NUM
+        ;
+%%
+int yyerror(char *msg)
+{
+        printf("Invalid\n");
+        exit(0);
+}
+main()
+{
+        printf("Enter the program\n");
+        yyparse();
+}
+------------------------------
+cparser6.l
+%{
+#include "y.tab.h"
+%}
+%%
+"#define"       {return DEF;}
+"#include"      {return INC;}
+"main()"      {return MAIN;}
+"int"         {return INT;}
+"float"       {return FLOAT;}
+"char"        {return CHAR;}
+"double"      {return DOUBLE;}
+"if"          {return IF;}
+"for"         {return FOR;}
+"while"       {return WHILE;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[0-9]+          {return NUM;}
+[ ]             {return BLANK;}
+[\n]            {return NL;}
+.               {return yytext[0];}
+%%
+------------------------------
+cparser6.y
+%{
+#include<stdio.h>
+#include<stdlib.h>
+%}
+%token DEF INC ID NUM CHAR DOUBLE BLANK MAIN  NL INT FLOAT IF WHILE FOR
+%%
+        pgm:    def inc main'{' NL dec iff whileloop  NL forloop NL '}' {printf("Valid C program\n");exit(0);}
+
+        ;
+        def:    DEF BLANK ID BLANK NUM NL def
+        |
+        ;
+        inc:    INC'<'ID'.'ID'>'NL inc
+        |
+        ;
+        dec: dtype BLANK var';'NL dec
+        |
+        ;
+        dtype: INT
+        |      FLOAT
+        |      CHAR
+        |      DOUBLE
+        ;
+        main: MAIN NL
+        ;
+        var: ID'='NUM',' var
+        |    ID ','ID
+        |    ID '='NUM
+        |    ID '[' NUM ']'
+        |    ID
+        ;
+        iff: IF'('cond')' '{' NL var';' NL '}' NL iff
+        |
+        ;
+        cond: ID '>' ID
+        |     ID '<' ID
+        |     ID '>''=' ID
+        |     ID '<''='
+        |     NUM '>' NUM
+        |     NUM '<' NUM
+        |     NUM '>''='NUM
+        |     NUM '<''='NUM
+        |     NUM '!''='NUM
+        |     NUM '=''='NUM
+        |     ID  '=''='ID
+        |     ID  '!''='ID
+        |     ID  '>'NUM
+        |     ID  '<'NUM
+        |     ID   '>''='NUM
+        |     ID   '<''='NUM
+        |     ID    '!''='NUM
+        |     ID    '=''='NUM
+        ;
+        whileloop: WHILE '(' cond ')' '{' NL var';'NL '}' NL whileloop
+        |
+        ;
+        forloop: FOR '('var ';'cond';' update ')' '{' NL var';' NL '}' NL forloop
+        |
+        ;
+        update:ID'+''+'
+        |      ID'-''-'
+        |
+        ;
+%%
+int yyerror(char *msg)
+{
+        printf("Invalid\n");
+        exit(0);
+}
+main()
+{
+        printf("Enter the program\n");
+        yyparse();
+}
+------------------------------
+evaluate.l
+%{
+        int yylval;
+        #include "y.tab.h"
+%}
+%%
+[0-9]+  { yylval = atoi(yytext);return NUMBER;}
+[\n]    {return NL;}
+.       {return yytext[0];}
+%%
+------------------------------
+evaluate.y
+%{
+  #include<stdio.h>
+  int yylex();
+  int yylval;
+%}
+%token NUMBER ID NL
+%left '+','-'
+%left '*','/'
+%%
+stmt: exp NL {printf("\nValid Expression\n");exit(0);};
+exp: exp'+'exp {$$ = $1 + $3;printf("value is %d",$$);}
+     |exp '-' exp {$$ = $1 - $3;printf("value is %d",$$);}
+     |exp '*' exp {$$=$1*$3;printf("value is %d",$$);}
+      |exp '/' exp {$$=$1/$3;printf("value is %d",$$);}
+      |'('exp')' {$$ = $2;printf("value is %d",$$);}
+      |ID
+      |NUMBER
+      ;
+%%
+int yyerror(char *msg)
+{
+   printf("Invalid Expression\n");
+   exit(0);
+}
+main()
+{
+  printf("Enter the expression\n");
+  yyparse();
+}
+------------------------------
+even_a_odd_b.l
+%{
+#include<stdio.h>
+%}
+%%
+(aa)*(b)(bb)* {printf("the given string starts with even number of a's and ends with odd number of b's");}
+.*            {printf("the given string is invalid");}
+%%
+int yywrap(){
+return 1;
+}
+int main(){
+printf("enter the string:\n");
+yylex();
+}
+------------------------------
+even_or_odd.l
+%{
+#include<stdio.h>
+%}
+%%
+[+-]*[0-9]*[02468]      {printf("The number is even\n");}
+[+-]*[0-9]*[13579]      {printf("The number is odd\n");}
+.*              {printf("Invalid number");}
+%%
+int yywrap(){
+return 1;}
+int main(){
+printf("Enter the number:\n");
+yylex();
+}
+------------------------------
+frac_count.l
+/*Lex program to count the number of positive and negative fractions*/
+%{
+        #include<stdio.h>
+        int positive=0,negative=0;
+%}
+%%
+[+]?[0-9]+[.]*[0-9]* {
+                positive++;
+ }
+[-]?[0-9]+[.]*[0-9]* { negative++;}
+%%
+int yywrap(){
+return 1;
+}
+ main(){
+ yylex();
+ printf("No.of positive fractions=%d\n",positive);
+printf("No.of negative fractions=%d\n",negative);
+
+}
+------------------------------
+input.c
+//C program to chech if the number is odd or even
+#include<stdio.h>
+int main(){
+int num;//Variable to store the number
+printf("Eneter the number:\n");//Prompt the user to enter the number
+scanf("%d",&num);//Reading the input
+if(num%2==0){
+/*this is a
+ multiline comment
+ in C*/
+/*Comment*/
+printf("even");
+}/*This is another
+multiline comment                                                                                                                                                                                 */
+else{
+printf("odd");
+}
+}
+------------------------------
+input.txt
+sdmcet cse
+------------------------------
+name_count.l
+/*Program to count the number of times the name sumedha appears*/
+%{
+        #include<stdio.h>
+        int times=0;
+%}
+%%
+
+"sumedha" {times++;}
+[.] {;}
+
+%%
+int yywrap(){
+return 1;
+}
+main(){
+ printf("Enter the input string:\n");
+ yylex();
+ printf("The number of times the name sumedha appears=%d\n",times);
+}
+------------------------------
+output.c
+#include<stdio.h>
+int main(){
+int num;
+printf("Eneter the number:\n");
+scanf("%d",&num);
+if(num%2==0){
+
+
+printf("even");
+}
+else{
+printf("odd");
+}
+}
+------------------------------
+pal.l
+%{
+#inlcude "y.tab.h"
+%}
+%%
+[01] {return yytext[0];}
+\n {return EOL;}
+. {}
+%%
+------------------------------
+pal.y
+%{
+#include<stdio.h>
+int yylex();
+void yyerror(const char *s);
+%}
+
+%token ZERO ONE EOL
+%%
+input :ZERO
+      |ONE
+      |ZERO input ZERO
+      |ONE input ONE
+      |ZERO input ONE
+      |ONE input ZERO
+      |EOL
+      ;
+%%
+void yyerror(const char *s){
+  fprintf(stderr,"%s\n",s);
+}
+int main(void){
+  yyparse();
+  return 0;
+}
+------------------------------
+palindrome.l
+%{
+#include "y.tab.h"
+%}
+
+%%
+[01]+   { yylval.str = strdup(yytext); return STRING; }
+\n          { return EOL; }
+.           { /* Ignore all other characters */ }
+
+%%
+------------------------------
+palindrome.y
+%{
+#include <stdio.h>
+#include <string.h>
+int yylex();
+void yyerror(const char *s);
+%}
+
+%union {
+    char *str;
+}
+
+%token <str> STRING
+%token EOL
+
+%%
+
+input: STRING EOL {
+    char *str = $1;
+    int len = strlen(str);
+    int i, j;
+    int palindrome = 1;
+    for (i = 0, j = len - 1; i < j; i++, j--) {
+        if (str[i] != str[j]) {
+            palindrome = 0;
+            break;
+        }
+    }
+    if (palindrome)
+        printf("'%s' is a palindrome.\n", str);
+    else
+        printf("'%s' is not a palindrome.\n", str);
+}
+| EOL
+;
+
+%%
+
+void yyerror(const char *s) {
+    fprintf(stderr, "Error: %s\n", s);
+}
+
+int main() {
+    yyparse();
+    return 0;
+}
+------------------------------
+pattern_abb.l
+%{
+#include<stdio.h>
+%}
+%%
+[ab]*abb        {printf("String ends with pattern abb\n");
+                printf("The given string is %s\n",yytext);
+                printf("The length is %d\n",yyleng);
+                }
+.*              {printf("The given string does not end with abb");
+                 printf("The given string is %s\n",yytext);
+                printf("The length is %d\n",yyleng);
+                }
+%%
+int yywrap(){
+return 1;
+}
+int main()
+{
+  printf("Enter the string:\n");
+  yylex();
+}
+------------------------------
+usn.l
+%{
+#include<stdio.h>
+%}
+%%
+[1-9][a-zA-Z][a-zA-Z][0-9][0-9][a-zA-Z][a-zA-Z][0-9][0-9][0-9]   {printf("the given USN is valid");}
+.*            {printf("the given usn is invalid");}
+%%
+int yywrap(){
+return 1;
+}
+int main(){
+printf("enter the USN:\n");
+yylex();
+}
+------------------------------
+validity.l
+%{
+        #include "y.tab.h"
+%}
+%%
+[0-9]+  {return NUMBER;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[\n]    {return NL;}
+.       {return yytext[0];}
+%%
+------------------------------
+validity.y
+%{
+  #include<stdio.h>
+%}
+%token NUMBER ID NL
+%left '+','-'
+%left '*','/'
+%right '='
+%%
+stmt: exp NL {printf("Valid Expression\n");exit(0);};
+exp: exp '+' exp
+     |exp '-' exp
+     |exp '*' exp
+      |exp '/' exp
+      |exp '=' exp
+      |'('exp')'
+      |ID
+      |NUMBER
+      ;
+%%
+int yyerror(char *msg)
+{
+   printf("Invalid Expression\n");
+   exit(0);
+}
+main()
+{
+  printf("Enter the expression\n");
+  yyparse();
+}
+------------------------------
+vowels.txt
+abcdeioumsk
+------------------------------
+vowels_cons_count_file.l
+%{
+        #include<stdio.h>
+        int vowels=0;
+        int consonants=0;
+        int blanks=0;
+        FILE *f1,*vf,*cf;
+%}
+%%
+
+[aeiouAEIOU] {vowels++;fprintf(vf,"%s",yytext);}
+[a-zA-Z]     {consonants++;fprintf(cf,"%s",yytext);}
+[ ]          {blanks++;}
+.            ;
+
+%%
+int yywrap(){
+return 1;
+}
+main(){
+ f1=fopen("input.txt","r");
+ vf=fopen("vowels.txt","w");
+ cf=fopen("consonants.txt","w");
+ yyin=f1;
+ yylex();
+ printf("The number of vowels=%d\n",vowels);
+ printf("The number of consonants=%d\n",consonants);
+ printf("The number of blanks=%d\n",blanks);
+}
+------------------------------
