@@ -1,0 +1,116 @@
+%{
+#include "y.tab.h"
+%}
+%%
+"#define"               {return DEF;}
+"#include"              {return INC;}
+"main()"                {return MAIN;}
+"int"                   {return INT;}
+"float"                 {return FLT;}
+"char"                  {return CHR;}
+"double"                {return DBL;}
+"if"                    {return IF;}
+"else"                  {return ELS;}
+"for"                   {return FOR;}
+"while"                 {return WHL;}
+"do"                    {return DO;}
+"printf"                {return PF;}
+"scanf"                 {return SF;}
+"//"[a-zA-Z0-9\t ]*     {return SLC;}
+"/*"[a-zA-Z0-9\t\n ]*"*/" {return MLC;}
+[a-zA-Z][a-zA-Z0-9_]*   {return ID;}
+[0-9]+                  {return NUM;}
+[ ]                     {return BLANK;}
+[\n]                    {return NL;}
+.                       {return yytext[0];}
+%%
+-------------------------------------------
+%{
+#include<stdio.h>
+#include<stdlib.h>
+%}
+%token SLC MLC DEF INC ID NUM BLANK INT CHR DBL FLT IF ELS FOR WHL DO PF SF MAIN NL
+%left '+' '-'
+%left '*' '/'
+%right '='
+%%
+        pgm: comments def inc comments dec main '{' NL comments dec if for while do stmt printf scanf '}' { printf("Valid C Program.\n"); exit(0); };
+
+        comments: SLC NL comments
+        | MLC NL comments
+        |
+        ;
+        take: '%'ID take
+        | '%'ID
+        ;
+        takers: '&'ID',' takers
+        | '&'ID
+        ;
+        scanf: SF'(''"'take'"'','takers')'';' NL scanf
+        |
+        ;
+        chars: ID BLANK chars
+        | ID
+        ;
+        printf: PF'(''"'chars'"'')'';' NL printf
+        |
+        ;
+        exp: exp '+' exp
+        | exp '-' exp
+        | exp '/' exp
+        | exp '*' exp
+        | exp '=' exp
+        | '('exp')'
+        | ID
+        | NUM
+        ;
+        stmt: exp';' NL stmt
+        |
+        ;
+        def: DEF BLANK ID BLANK NUM NL def
+        |
+        ;
+        inc: INC'<'ID'.'ID'>' NL inc
+        |
+        ;
+        dec: dtype BLANK var';' NL dec
+        |
+        ;
+        dtype: INT | CHR | FLT | DBL
+        ;
+        var: ID',' var
+        | ID
+        | ID'='NUM',' var
+        | ID'='NUM
+        | ID'['NUM']'',' var
+        | ID'['NUM']'
+        ;
+        op: ID | NUM;
+        opt: '>' | '<' | '=''=' | '!''=' | '>''=' | '<''=';
+        cond: op opt op;
+        if: IF'('cond')'NL'{'NL var';' NL'}'ELS'{'NL var';' NL'}' NL if
+        |
+        ;
+        chg: '+' | '-';
+        update: ID chg chg;
+        for: FOR'('var';'cond';'update')'NL'{'NL var';' NL'}' NL for
+        |
+        ;
+        while: WHL'('cond')'NL'{'NL update';' NL'}' NL while
+        |
+        ;
+        do: DO'{'NL var';' NL'}'WHL'('cond')'';' NL do
+        |
+        ;
+        main: MAIN NL;
+%%
+int yyerror(char *msg)
+{
+        printf("Invalid.\n");
+        exit(0);
+}
+main()
+{
+        printf("Enter the C Program:\n");
+        yyparse();
+}
